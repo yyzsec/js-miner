@@ -3,10 +3,10 @@ ExtensionType: 1
 Name: JS Miner
 RepoName: js-miner
 ScreenVersion: 1.1
-SerialVersion: 1
+SerialVersion: 2
 MinPlatformVersion: 0
 ProOnly: True
-Author: Minamo7sen
+Author: Mina M. Edwar
 ShortDescription: Tries to find interesting stuff inside static files; mainly JavaScript and JSON files.
 EntryPoint: build/libs/burp-JS-Miner.jar
 BuildCommand: gradle clean build jar
