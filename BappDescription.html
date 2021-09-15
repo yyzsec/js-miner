@@ -1,0 +1,45 @@
+<p>This tool tries to find interesting stuff inside static files; mainly JavaScript and JSON files.</p>
+
+<p>Background</p>
+<p>While assessing a web application, it is expected to enumerate information residing inside static ".js" and ".json" files.</p>
+<p>This tool tries to help with this "initial" phase, which should be followed by manual review/analysis of the reported issues.</p>
+<p><strong>Note:</strong> Like many other tools of the same nature, this tool is expected to produce false positives. Also, as it is meant to be used as a helper tool, but it does not replace manual review/analysis (nothing really can).</p>
+
+<p>Features</p>
+<ul>
+	<li>Scans for secrets / credentials
+		<ul>
+			<li>It uses Shannon entropy to improve the confidence level.</li>
+		</ul>
+	</li>
+	<li>Scans for subdomains</li>
+	<li>Scans for cloud URLs
+		<ul>
+			<li>Support for (AWS, Azure, Google, CloudFront, Digital Ocean, Oracle, Alibaba, Firebase, Rackspace, Dream Host)</li>
+		</ul>
+	</li>
+	<li>Tries to identify "dependency confusion" issues.
+		<ul>
+			<li>Reports a critical issue when a dependency or an organization is missing from the NPM registry.</li>
+			<li>Reports informational issues for identified dependencies.</li>
+		</ul>
+	</li>
+	<li>Tries to construct source code from JavaScript Source Map Files (if found).
+		<ul>
+			<li>Actively tries to guess the common location of the ".map" files;</li>
+			<li>It can also (passively) parse inline base64 JS map files.</li>
+		</ul>
+	</li>
+</ul>
+
+<p>How to use this tool</p>
+<p><strong>In a nutshell:</strong> Passive scans are invoked automatically, while active scans require manual invocation ( by right-clicking your targets) from the site map or other Burp windows.</p>
+
+<p>More information</p>
+<p>The tool contains two main scans:</p>
+<ul>
+	<li><strong>Passive</strong> scans, which are enabled by default (to search for inline JS map files, secrets, subdomains and cloud URLs).</li>
+	<li><strong>Actively</strong> try to guess JavaScript source map files. (During the process, HTTP requests will be sent)</li>
+</ul>
+<p>For the best results, ensure to navigate your target first in order for all the static files to be loaded then right-click on the target domain (example.com) from Burp Suite's site map tree, then select one of "JS Miner" scan options.</p>
+<p><strong>Note:</strong>JS Source mapper scan is not included in Burp's "Active scan".</p>

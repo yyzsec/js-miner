@@ -1,0 +1,13 @@
+Uuid: 0ab7a94d8e11449daaf0fb387431225b
+ExtensionType: 1
+Name: JS Miner
+RepoName: js-miner
+ScreenVersion: 1.1
+SerialVersion: 1
+MinPlatformVersion: 0
+ProOnly: True
+Author: Minamo7sen
+ShortDescription: Tries to find interesting stuff inside static files; mainly JavaScript and JSON files.
+EntryPoint: build/libs/burp-JS-Miner.jar
+BuildCommand: gradle clean build jar
+SupportedProducts: Pro
