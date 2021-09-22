@@ -2,8 +2,8 @@ Uuid: 0ab7a94d8e11449daaf0fb387431225b
 ExtensionType: 1
 Name: JS Miner
 RepoName: js-miner
-ScreenVersion: 1.1
-SerialVersion: 3
+ScreenVersion: 1.11
+SerialVersion: 4
 MinPlatformVersion: 0
 ProOnly: True
 Author: Mina M. Edwar
