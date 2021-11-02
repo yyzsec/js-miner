@@ -1,29 +1,139 @@
-package burp;
+package burp.utils;
+
+import burp.*;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 
 import static burp.BurpExtender.*;
-import static burp.Constants.*;
+import static burp.utils.Constants.*;
 
 public final class Utilities {
     private static final Pattern FILE_NAME_REGEX = Pattern.compile("(.*)\\.(.*)");
-    private static final long REGEX_TIME_OUT = 60000; // 1 minute (x3)
 
     private Utilities() {
     }
 
     private static final IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
     private static final IExtensionHelpers helpers = BurpExtender.getHelpers();
+
+    /*
+     *  This is mainly used by the "querySiteMap" function
+     *  Checks if the HTTP Response is not null and that the Requested file is either JS or JSON
+     */
+    public static boolean isValidScanTarget(IHttpRequestResponse baseRequestResponse, String[] queryFileExtensions) {
+        if (baseRequestResponse.getResponse() != null && BurpExtender.isLoaded()) {
+            for (String fileExtension: queryFileExtensions) {
+                if (helpers.analyzeRequest(baseRequestResponse).getUrl().getPath().endsWith("." + fileExtension)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /*
+     *  Query Site Map for specific extensions (including children of the passed Request URL)
+     */
+    public static Set<IHttpRequestResponse> querySiteMap(IHttpRequestResponse[] httpReqResArray, String[] queryFileExtensions) {
+        HashSet<IHttpRequestResponse> uniqueRequests = new HashSet<>();
+        for (IHttpRequestResponse baseRequestResponse : httpReqResArray) {
+            URL url = helpers.analyzeRequest(baseRequestResponse).getUrl();
+            // Get all child URLs from Site Map
+            IHttpRequestResponse[] siteMapReqResArray = callbacks.getSiteMap(Utilities.getURL(url));
+            for (IHttpRequestResponse requestResponse : siteMapReqResArray) {
+                if (isValidScanTarget(requestResponse, queryFileExtensions)) {
+                    uniqueRequests.add(requestResponse);
+                }
+            }
+        }
+        return uniqueRequests;
+    }
+
+    // Append found matches to be listed in Burp's issues
+    public static void appendFoundMatches(String finding, StringBuilder uniqueMatchesSB) {
+        // Only report unique instances
+        if (uniqueMatchesSB.indexOf(HTML_LIST_BULLET_OPEN + finding + HTML_LIST_BULLET_CLOSED) == -1) {
+            uniqueMatchesSB.append(HTML_LIST_BULLET_OPEN);
+            uniqueMatchesSB.append(finding);
+            uniqueMatchesSB.append(HTML_LIST_BULLET_CLOSED);
+        }
+    }
+
+    /**
+     * An improved version of the getMatches method to search an HTTP response for occurrences of a unique matches
+     * and return a sorted list of start/end offsets
+     */
+    public static List<int[]> getMatches(byte[] response, List<byte[]> uniqueMatches)
+    {
+        List<int[]> matches = new ArrayList<>();
+
+        for (byte[] match: uniqueMatches) {
+            // Limit Response highlighters (matches) only to 500 then break (to maintain performance)
+            if (matches.size() < 500) {
+                int start = 0;
+                while (start < response.length)
+                {
+                    start = helpers.indexOf(response, match, false, start, response.length);
+                    if (start == -1)
+                        break;
+                    matches.add(new int[] { start, start + match.length });
+                    start += match.length;
+                }
+            } else {
+                break;
+            }
+        }
+        // Sort found matches or otherwise Burp will complain (Source: https://stackoverflow.com/questions/19596950/sort-an-arraylist-of-integer-arrays)
+        matches.sort(new Comparator<int[]>() {
+            private static final int INDEX = 0;
+
+            @Override
+            public int compare(int[] o1, int[] o2) {
+                return Integer.compare(o1[INDEX], o2[INDEX]);
+            }
+        });
+
+        // Dirty trick to fix overlapping offsets
+        for (int i = 0; i < matches.size(); i++) {
+            if (i + 1 != matches.size()
+                    && matches.get(i)[1] > matches.get(i + 1)[0]) {
+                int[] fixed = {matches.get(i)[0], matches.get(i + 1)[0]};
+                matches.set(i, fixed);
+            }
+        }
+
+        return matches;
+    }
+
+
+    public static byte[] getHTTPResponseBodyHash(IHttpRequestResponse baseRequestResponse) {
+        if (baseRequestResponse.getResponse() != null) {
+            // Get bytes of Response content
+            int bodyOffset = helpers.analyzeRequest(baseRequestResponse.getResponse()).getBodyOffset();
+            byte[] responseBytes = baseRequestResponse.getResponse();
+            byte[] responseBodyBytes = Arrays.copyOfRange(responseBytes, bodyOffset, responseBytes.length);
+            MessageDigest digest = null;
+            try {
+                digest = MessageDigest.getInstance("SHA-256");
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+            return digest != null ? digest.digest(responseBodyBytes) : new byte[0];
+        } else {
+            return new byte[0];
+        }
+    }
+
 
     // template issue for interesting stuff
     public static void sendNewIssue(
@@ -43,7 +153,7 @@ public final class Utilities {
                 SCAN_ISSUE_HEADER +
                         description +
                         HTML_LIST_OPEN +
-                        HTML_LIST_BULLET_OPEN + issueHighlight + HTML_LIST_BULLET_CLOSED +
+                        issueHighlight+
                         HTML_LIST_CLOSED +
                         "The identified matches should be highlighted in the HTTP response.<br><br>" +
                         "<br>",
@@ -76,9 +186,14 @@ public final class Utilities {
         return true;
     }
 
-    public static void logScanInfo(String status, int taskId, String scannerName, String url) {
-        if (taskId != -1) {
-            mStdOut.printf(LOG_FORMAT, "[" + status + "]", LOG_TASK_ID_PREFIX + taskId, scannerName, url);
+    public static URL trimURL(URL url) {
+        String host = url.getHost();
+        String string = url.toString().replaceAll(host + ".*", host);
+        try {
+            return new URL(string);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -118,7 +233,8 @@ public final class Utilities {
     public static boolean isMatchedDomainValid(String matchedDomain, String rootDomain, String requestDomain) {
         return !matchedDomain.equals("www." + requestDomain)
                 && !matchedDomain.equals(requestDomain)
-                && !matchedDomain.equals("www." + rootDomain);
+                && !matchedDomain.equals("www." + rootDomain)
+                && matchedDomain.endsWith(rootDomain);
     }
 
     // Source: https://rosettacode.org/wiki/Entropy#Java
@@ -213,14 +329,16 @@ public final class Utilities {
         }
     }
 
-    public static boolean isDirEmpty(Path directory) throws IOException {
+    public static boolean isDirEmpty(Path directory) {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
             return !dirStream.iterator().hasNext();
+        } catch (IOException e) {
+            return false;
         }
     }
 
     // Build IHttpService object from a URL (to use it for "makeHttpRequest")
-    static IHttpService url2HttpService(URL url) {
+    public static IHttpService url2HttpService(URL url) {
         return new IHttpService() {
             @Override
             // This is the actual host
@@ -300,34 +418,22 @@ public final class Utilities {
         }
     }
 
+    public static Path urlToPath(URI uri) {
+
+        Path newPath = Paths.get(FileSystems.getDefault().getSeparator());
+
+        String[] uriPaths = uri.getPath().split("/");
+        for (String uriPath: uriPaths) {
+            newPath = Paths.get( newPath.toUri() )
+                    .resolve(uriPath);
+        }
+
+        return newPath;
+    }
+
     public static String b64Decode(String encodedString) {
         byte[] decodedBytes = Base64.getDecoder().decode(encodedString.trim());
         return new String(decodedBytes);
     }
 
-    /**
-     * A dirty method to timeout Regexes that takes so long
-     * <p>
-     * Due to the fact we are using big complex Regexes,
-     * sometimes with big files, this can take a long time.
-     * This method mitigates this problem by killing the thread before it "kills" your CPU =)
-     * Thanks to: https://www.ocpsoft.org/regex/how-to-interrupt-a-long-running-infinite-java-regular-expression/
-     */
-    public static void regexRunnerWithTimeOut(Runnable runnable) throws InterruptedException {
-        Thread thread = new Thread(runnable);
-        thread.start();
-        Thread.sleep(1000); // wait a bit then check the thread before forcing thread.interrupt
-
-        // Intentionally making loops to check if thread is alive to help continue the execution cleanly
-        if (thread.isAlive()) {
-            Thread.sleep(REGEX_TIME_OUT);   // wait a minute then check
-            if (thread.isAlive()) {
-                Thread.sleep(REGEX_TIME_OUT);   // wait a second minute then check
-                if (thread.isAlive()) {
-                    Thread.sleep(REGEX_TIME_OUT);   // wait a third minute then give-up and kill force thread.interrupt
-                    thread.interrupt();
-                }
-            }
-        }
-    }
 }
