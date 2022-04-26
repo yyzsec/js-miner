@@ -26,7 +26,7 @@ public class BurpExtender implements IBurpExtender, IContextMenuFactory, IExtens
     public static PrintWriter mStdOut;
     public static PrintWriter mStdErr;
     public static final String EXTENSION_NAME = "JS Miner";
-    private static final String EXTENSION_VERSION = "1.14";
+    private static final String EXTENSION_VERSION = "1.15";
     private int taskCount = 0; // counter for invoked tasks through the menu items context (Not for Burp's passive scan)
 
     // Exposing callbacks for use in other classes
@@ -178,6 +178,11 @@ public class BurpExtender implements IBurpExtender, IContextMenuFactory, IExtens
             DumpStaticFilesItemAction dumpStaticFilesItemAction = new DumpStaticFilesItemAction(selectedMessages);
             dumpStaticFilesMenuItem.addActionListener(dumpStaticFilesItemAction);
             scanItems.add(dumpStaticFilesMenuItem);
+
+            JMenuItem endpointsFinderMenuItem = new JMenuItem("API Endpoints Finder");
+            EndpointsFinderItemAction endpointsFinderItemAction = new EndpointsFinderItemAction(selectedMessages);
+            endpointsFinderMenuItem.addActionListener(endpointsFinderItemAction);
+            scanItems.add(endpointsFinderMenuItem);
 
             // === Logging Menu Items ==== //
             JMenuItem checkTasksMenuItem = new JMenuItem("Tasks Summary");
@@ -391,6 +396,25 @@ public class BurpExtender implements IBurpExtender, IContextMenuFactory, IExtens
                         .dumpStaticFiles()
                         .taskId(++taskCount)
                         .timeStamp(ts)
+                        .build();
+                scannerBuilder.runScans();
+            }).start();
+        }
+    }
+
+    class EndpointsFinderItemAction implements ActionListener {
+        private final IHttpRequestResponse[] httpReqResArray;
+
+        EndpointsFinderItemAction(IHttpRequestResponse[] httpReqResArr) {
+            this.httpReqResArray = httpReqResArr;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            new Thread(() -> {
+                ScannerBuilder scannerBuilder = new ScannerBuilder.Builder(httpReqResArray)
+                        .endpointsFinder()
+                        .taskId(++taskCount)
                         .build();
                 scannerBuilder.runScans();
             }).start();
