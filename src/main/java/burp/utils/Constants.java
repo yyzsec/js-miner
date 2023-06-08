@@ -35,7 +35,7 @@ public class Constants {
     // Inspired by: https://github.com/nsonaniya2010/SubDomainizer/blob/master/SubDomainizer.py
     public static final Pattern SECRETS_REGEX = Pattern.compile(("['\"`]?(\\w*)" + // Starts with a quote then a word / white spaces
                     WHITE_SPACES +
-                    "(secret|token|password|passwd|authorization|bearer|aws_access_key_id|aws_secret_access_key|irc_pass|SLACK_BOT_TOKEN|id_dsa" +
+                    "(secret|token|password|passwd|authorization|bearer|aws_access_key_id|aws_secret_access_key|irc_pass|SLACK_BOT_TOKEN|id_dsa|" +
                     "secret[_-]?(key|token|secret)|" +
                     "api[_-]?(key|token|secret)|" +
                     "access[_-]?(key|token|secret)|" +
@@ -62,6 +62,9 @@ public class Constants {
                     REGEX_QUOTES // closing quote for secrets
             ),
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
+    public static final Pattern HTTP_BASIC_AUTH_SECRETS = Pattern.compile("Authorization.{0,5}Basic(\\s*)([A-Za-z0-9+/=]+)",
+            Pattern.MULTILINE);
 
     public static final Pattern b64SourceMapRegex = Pattern.compile("sourceMappingURL=data(.*)json(.*)base64,((?:[a-z0-9+/]{4})*(?:[a-z0-9+/]{2}==|[a-z0-9+/]{3}=)?)(\\\\n)?",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
