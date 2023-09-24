@@ -26,8 +26,13 @@ public class Constants {
                     "cloudfront.net|" +
                     "digitaloceanspaces.com|" +
                     "oraclecloud.com|" +
-                    "aliyuncs.com|" + // Ali baba
                     "firebaseio.com|" + // Firebase
+                    "aliyuncs.com|" + // Ali baba ref: https://help.aliyun.com/zh/oss/user-guide/regions-and-endpoints
+                    "myqcloud.com|" + // tencent oss ref: https://main.qcloudimg.com/raw/document/intl/product/pdf/tencent-cloud_436_6221_zh.pdf
+                    "bcebos.com|" + // baidu oss ref: https://cloud.baidu.com/doc/BOS/s/Ck1rk80hn
+                    "clouddn.com|" + // qiniu oss ref: https://www.qiniu.com/products/kodo
+                    "myhuaweicloud.com|" + // huawei oss ref: https://developer.huaweicloud.com/endpoint?OBS
+                    "jdcloud-oss.com|" + // jd yun oss ref: https://docs.jdcloud.com/cn/object-storage-service/oss-endpont-list
                     "rackcdn.com|" +
                     "objects.cdn.dream.io|objects-us-west-1.dream.io)",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
@@ -48,6 +53,11 @@ public class Constants {
                     "encrypt[_-]?(secret|key)|" +
                     "decrypt[_-]?(secret|key)|" +
                     "github[_-]?(key|token|secret)|" +
+                    "ghp_|" + // ghp_xxxxxxxxxxxx  github token
+                    "AKID|" + // tencent cloud SecretId
+                    "SecretId|" + // tencent cloud SecretId
+                    "SecretKey|" + // tencent cloud SecretKey
+                    "github_pat_|" + // github_pat_xxxxxxxxxxx Fine-grained personal access tokens
                     "slack[_-]?token)" +
                     "(\\w*)" + // in case there are any characters / white spaces
                     WHITE_SPACES +

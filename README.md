@@ -1,5 +1,27 @@
+> Forked from https://github.com/PortSwigger/js-miner
 # Burp JS Miner
 This tool tries to find interesting stuff inside static files; mainly JavaScript and JSON files.
+
+## CHANGELOG
+>  与原项目的不同
+### 2023年9月24日
+* 新增 腾讯云|百度云|华为云|七牛云|京东云 OSS相关的URL
+* 新增 github token|公有云常见aksk形式 的识别
+
+## 直接下载使用
+
+https://github.com/yyzsec/js-miner/releases
+
+
+## 源码编译
+
+```bash
+git clone https://github.com/yyzsec/js-miner
+cd burp-JS-Miner
+gradle fatJar
+
+# find your jar bianry at: build/libs/burp-JS-Miner-all.jar
+```
 
 ## Background
 While assessing a web application, it is expected to enumerate information residing inside static files such as JavaScript or JSON resources. 
@@ -61,15 +83,7 @@ I'm open for ideas/suggestions to help improve or optimize this tool.
 
 ### Contributors; thanks to
 -  [Stanislav Kravchenko](https://linkedin.com/in/staskravchenko/): For suggesting the dependency confusion feature, besides helping with testing and improving the functionality. 
-
-### Build from source
-```
-git clone https://github.com/minamo7sen/burp-JS-Miner.git
-cd burp-JS-Miner
-gradle fatJar
-```
-Then, the jar file can be found at `build/libs/burp-JS-Miner-all.jar`.
-
+-  [PortSwigger js-miner](https://github.com/PortSwigger/js-miner): where i forked from 
 
 ## Disclaimer
 It is the user's responsibility to obey all applicable local, state and federal laws. The author assumes no liability and is not responsible for any misuse or damage caused by this tool.

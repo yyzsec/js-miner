@@ -78,6 +78,7 @@ public class BurpExtender implements IBurpExtender, IContextMenuFactory, IExtens
 
         mStdOut.println("[*] Loaded:\t" + EXTENSION_NAME + " v" + EXTENSION_VERSION);
         mStdOut.println("[*] Author:\tMina M. Edwar (minamo7sen@gmail.com)");
+        mStdOut.println("[*] Modifiedy by :\tyyz (yyz@redrock.team)");
         mStdOut.println("=================================================");
 
         // Load extension configurations
