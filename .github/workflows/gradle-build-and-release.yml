@@ -1,0 +1,41 @@
+name: gradle-build-and-release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+    - name: Build with Gradle
+      uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      with:
+        arguments: fatJar
+
+
+    - name: Release
+      id: release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: build/libs/burp-JS-Miner-all.jar
+        # setup in repo/Settings/Secrets and variables/Actions
+        token: ${{ secrets.MY_TOKEN }}
+      env:
+        USERNAME: ${{ github.actor }}
+        GITHUB_REPOSITORY: yyzsec/js-miner
