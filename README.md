@@ -23,6 +23,10 @@ gradle fatJar
 # find your jar bianry at: build/libs/burp-JS-Miner-all.jar
 ```
 
+> Github Action 自动编译: 
+> 参照.github/workflows/gradle-build-and-release.yml
+
+
 ## Background
 While assessing a web application, it is expected to enumerate information residing inside static files such as JavaScript or JSON resources. 
 
