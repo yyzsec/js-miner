@@ -8,6 +8,10 @@ This tool tries to find interesting stuff inside static files; mainly JavaScript
 * 新增 腾讯云|百度云|华为云|七牛云|京东云 OSS相关的URL
 * 新增 github token|公有云常见aksk形式 的识别
 
+### TODO
+* 修改cloud-resources 的LOG等级
+* 增加API返回的内容检查，不在仅限于static file
+
 ## 直接下载使用
 
 https://github.com/yyzsec/js-miner/releases
